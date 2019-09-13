@@ -1,0 +1,35 @@
+version: "3.7"
+services:
+  web:
+    hostname: web
+    restart: always
+    container_name: web
+    build:
+      context: .
+      args:
+        - PORT=8080
+        - ALPINE=3.10
+    ports:
+      - 8080:8080
+    volumes:
+      - ./src:/var/www
+    depends_on:
+      - mysql
+  mysql:
+    restart: always
+    hostname: mysql
+    image: mysql:5.7.7
+    container_name: mysql
+    environment:
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=lumen
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - 3309:3306
+    volumes:
+      - lumen_db:/var/lib/mysql
+volumes:
+  lumen_db:
+networks:
+  default:
