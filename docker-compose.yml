@@ -1,35 +1,38 @@
 version: "3.7"
 services:
-  web:
-    hostname: web
-    restart: always
-    container_name: web
-    build:
-      context: .
-      args:
-        - PORT=8080
-        - ALPINE=3.10
-    ports:
-      - 8080:8080
-    volumes:
-      - ./src:/var/www
-    depends_on:
-      - mysql
-  mysql:
-    restart: always
-    hostname: mysql
-    image: mysql:5.7.7
-    container_name: mysql
+  cache:
+    image: memcached
+  db:
+    image: mysql:8
+    command:
+      [
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--default-authentication-plugin=mysql_native_password",
+      ]
     environment:
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
-      - MYSQL_DATABASE=lumen
-      - MYSQL_ROOT_PASSWORD=root
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_PASSWORD: secret
+      MYSQL_DATABASE: lumen
+      MYSQL_USER: lumen
+  nginx:
+    restart: always
+    build:
+      context: ./nginx
     ports:
-      - 3309:3306
+      - "3050:80"
+  frontend:
+    build:
+      context: ./frontend
     volumes:
-      - lumen_db:/var/lib/mysql
-volumes:
-  lumen_db:
-networks:
-  default:
+      - /app/node_modules
+      - ./frontend:/app
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - /app/node_modules
+      - ./backend:/app
+    links:
+      - db
+      - cache
